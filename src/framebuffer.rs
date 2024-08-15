@@ -1,4 +1,5 @@
 pub struct Color(pub u32);
+use rusttype::{Font, Scale, point, PositionedGlyph};
 
 
 pub struct Framebuffer{
@@ -22,8 +23,8 @@ impl Framebuffer{
             buffer: vec![0; width * height],
             //vector lleno de ceros con alto y ancho
             //operador ! sirve para realizar calculo
-            background_color: 0x000000, //blanco
-            current_color: 0xFFFFFF //negro
+            background_color: 0x000000, 
+            current_color: 0xFFFFFF 
         }
 
     }
@@ -43,11 +44,11 @@ impl Framebuffer{
         }
     }
 
-    pub fn point_with_color(&mut self, x: usize, y: usize, color: Color) {
-        if x < self.width && y < self.height {
-            self.buffer[y * self.width + x] = color.0;
-        }
-    }
+    //pub fn point_with_color(&mut self, x: usize, y: usize, color: Color) {
+    //    if x < self.width && y < self.height {
+     //       self.buffer[y * self.width + x] = color.0;
+     //   }
+    //}
     pub fn set_background_color(&mut self, color: Color) {
         self.background_color = color.0;
 
@@ -56,5 +57,29 @@ impl Framebuffer{
     pub fn set_current_color(&mut self, color: Color) {
         self.current_color = color.0;
  
+    }
+    pub fn draw_text(&mut self, x: usize, y: usize, text: &str, color: Color) {
+        let scale = Scale::uniform(20.0);
+        let font_data = include_bytes!("../assets/avenir.ttc");
+        let font = Font::try_from_bytes(font_data as &[u8]).unwrap();
+        
+        let v_metrics = font.v_metrics(scale);
+        let start = point(x as f32, y as f32 + v_metrics.ascent);
+
+        let glyphs: Vec<PositionedGlyph<'_>> = font.layout(text, scale, start).collect();
+
+        for glyph in glyphs {
+            if let Some(bb) = glyph.pixel_bounding_box() {
+                glyph.draw(|gx, gy, gv| {
+                    let gx = gx as i32 + bb.min.x;
+                    let gy = gy as i32 + bb.min.y;
+                    if gv > 0.3 {
+                        if gx >= 0 && gx < self.width as i32 && gy >= 0 && gy < self.height as i32 {
+                            self.buffer[(gy as usize) * self.width + gx as usize] = color.0;
+                        }
+                    }
+                });
+            }
+        }
     }
 }

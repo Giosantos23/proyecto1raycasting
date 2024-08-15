@@ -8,12 +8,13 @@ mod texture;
 use minifb::{Window, WindowOptions, Key};
 use nalgebra_glm::{Vec2};
 use std::f32::consts::PI;
-use std::time::Duration;
+use std::time::{Instant, Duration};
 use crate::framebuffer::{Framebuffer, Color};
 use crate::maze::load_maze;
 use crate::player::{Player};
 use crate::caster::{cast_ray, render_3d};
 use crate::texture::Texture;
+
 
 fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: usize, cell: char) {
     if cell == ' ' {
@@ -39,7 +40,6 @@ fn render(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>>)
         }
     }
 
-    // draw player
     framebuffer.set_current_color(Color(0xFF0000));
     framebuffer.point(player.pos.x as usize, player.pos.y as usize);
 
@@ -59,6 +59,9 @@ fn main() {
     let framebuffer_width = 1300;
     let framebuffer_height = 900;
     let frame_delay = Duration::from_millis(16);
+    let mut last_time = Instant::now();
+    let mut frames = 0;
+    let mut fps = 0;
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
 
@@ -110,6 +113,15 @@ fn main() {
             player.a += 0.05;
         }
 
+        let current_time = Instant::now();
+        let delta_time = current_time.duration_since(last_time);
+        frames += 1;
+        if delta_time >= Duration::from_secs(1) {
+            fps = frames;
+            frames = 0;
+            last_time = current_time;
+        }
+
         framebuffer.clear();
 
         if is_3d_mode {
@@ -117,6 +129,9 @@ fn main() {
         } else {
             render(&mut framebuffer, &player, &maze);
         }
+
+        let fps_text = format!("FPS: {}", fps);
+        framebuffer.draw_text(framebuffer.width - 100, 10, &fps_text, Color(0xFFFFFF));
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
