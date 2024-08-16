@@ -53,7 +53,58 @@ fn render(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>>)
     }
 }
 
+fn draw_minimap(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>>, minimap_size: usize) {
+    let maze_height = maze.len();
+    let maze_width = maze[0].len();
+
+    let block_size_x = minimap_size as f32 / maze_width as f32;
+    let block_size_y = minimap_size as f32 / maze_height as f32;
+
+    // Dibujar el laberinto en el minimapa
+    for (row_index, row) in maze.iter().enumerate() {
+        for (col_index, &cell) in row.iter().enumerate() {
+            let x = (col_index as f32 * block_size_x) as usize;
+            let y = (row_index as f32 * block_size_y) as usize;
+
+            if cell != ' ' {
+                framebuffer.set_current_color(Color(0xFF0000)); // Color de los muros en el minimapa
+            } else {
+                framebuffer.set_current_color(Color(0x333333)); // Color del suelo en el minimapa
+            }
+
+            for i in 0..block_size_x as usize {
+                for j in 0..block_size_y as usize {
+                    if x + i < minimap_size && y + j < minimap_size {
+                        framebuffer.point(x + i, y + j);
+                    }
+                }
+            }
+        }
+    }
+
+    // Dibuja la posición del jugador
+    framebuffer.set_current_color(Color(0x0000FF)); // Color del jugador en el minimapa
+    let player_x = ((player.pos.x / (maze_width as f32 * 100.0)) * minimap_size as f32) as usize;
+    let player_y = ((player.pos.y / (maze_height as f32 * 100.0)) * minimap_size as f32) as usize;
+    
+    let player_size = 5; // Tamaño del punto del jugador en el minimapa
+    let half_size = player_size / 2;
+    
+    for i in 0..player_size {
+        for j in 0..player_size {
+            let px = player_x.saturating_sub(half_size) + i;
+            let py = player_y.saturating_sub(half_size) + j;
+    
+            if px < minimap_size && py < minimap_size {
+                framebuffer.point(px, py);
+            }
+        }
+    }
+}
+
+
 fn main() {
+
     let window_width = 1300;
     let window_height = 900;
     let framebuffer_width = 1300;
@@ -84,16 +135,14 @@ fn main() {
     let maze = load_maze("./maze.txt");
     let texture = Texture::from_file("back4.jpg").expect("Failed to load texture");
 
-
-    let mut is_3d_mode = false; // Variable para controlar el modo
+    let mut is_3d_mode = false;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
 
         if window.is_key_down(Key::M) {
-            is_3d_mode = !is_3d_mode; // Alterna entre 2D y 3D
+            is_3d_mode = !is_3d_mode;
         }
 
-        // Movimiento del jugador con colisiones
         if window.is_key_down(Key::W) {
             let next_pos = Vec2::new(player.pos.x + player.a.cos() * player.speed, player.pos.y + player.a.sin() * player.speed);
             if !is_colliding(&next_pos, &maze, 100) {
@@ -126,6 +175,7 @@ fn main() {
 
         if is_3d_mode {
             render_3d(&mut framebuffer, &player, &maze, &texture);
+            draw_minimap(&mut framebuffer, &player, &maze, 200); 
         } else {
             render(&mut framebuffer, &player, &maze);
         }
@@ -141,7 +191,6 @@ fn main() {
     }
 }
 
-// Nueva función para verificar colisiones
 fn is_colliding(pos: &Vec2, maze: &Vec<Vec<char>>, block_size: usize) -> bool {
     let x = pos.x as usize;
     let y = pos.y as usize;

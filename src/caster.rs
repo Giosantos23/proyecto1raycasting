@@ -29,7 +29,7 @@ pub fn cast_ray(framebuffer: &mut Framebuffer, maze: &Vec<Vec<char>>, player: &P
         framebuffer.set_current_color(Color(0xFFDDDD)); 
         framebuffer.point(x, y); 
 
-        d += 0.5; 
+        d += 0.1; 
     }
 }
 pub fn render_3d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<char>>, texture: &Texture) {
@@ -41,7 +41,9 @@ pub fn render_3d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<
         let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
         
         let (distance, hit_wall_x, hit_wall_y) = cast_ray_3d(&maze, &player, a, block_size);
-        let distance = distance * (player.a - a).cos();  
+        let distance = distance * (player.a - a).cos(); 
+        
+        let distance = if distance == 0.0 { 0.0001 } else { distance };
         
         let wall_height = (framebuffer.height as f32 / distance) as usize;
         let wall_start = (framebuffer.height / 2).saturating_sub(wall_height / 2);
@@ -61,6 +63,7 @@ pub fn render_3d(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<
         }
     }
 }
+
 
 
 
@@ -86,7 +89,7 @@ fn cast_ray_3d(maze: &Vec<Vec<char>>, player: &Player, a: f32, block_size: usize
             break (d, x % block_size, y % block_size);
         }
 
-        d += 0.1; 
+        d += 1.0; 
     }
 }
 
