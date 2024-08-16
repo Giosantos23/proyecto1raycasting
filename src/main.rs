@@ -16,6 +16,9 @@ use crate::caster::{cast_ray, render_3d};
 use crate::texture::Texture;
 use rodio::{Decoder, OutputStream, Sink};
 use std::fs::File;
+use std::thread;
+use std::io::BufReader;
+
 
 
 
@@ -113,9 +116,16 @@ fn draw_minimap(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<c
     }
 }
 
+fn play_background_music() {
+    let (_stream, stream_handle) = OutputStream::try_default().expect("Failed to get the default output stream");
+    let sound_file = File::open("tswift.wav").expect("Failed to open sound file");
+    let source = Decoder::new(BufReader::new(sound_file)).expect("Failed to decode sound file");
+    let sink = Sink::try_new(&stream_handle).expect("Failed to create Sink");
+    sink.append(source);
+    sink.sleep_until_end(); 
+}
 
 fn main() {
-
     let window_width = 1300;
     let window_height = 900;
     let framebuffer_width = 1300;
@@ -131,6 +141,10 @@ fn main() {
     let source = Decoder::new(std::io::BufReader::new(sound_file)).expect("Failed to decode sound file");
     let sink = Sink::try_new(&stream_handle).expect("Failed to create Sink");
     sink.append(source);
+
+    thread::spawn(move || {
+        play_background_music();
+    });
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
 
@@ -165,7 +179,7 @@ fn main() {
     };
 
     let maze = load_maze("./maze.txt");
-    let texture = Texture::from_file("back4.jpg").expect("Failed to load texture");
+    let texture = Texture::from_file("bbbb.jpg").expect("Failed to load texture");
 
     let mut is_3d_mode = false;
 
