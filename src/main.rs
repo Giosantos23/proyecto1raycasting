@@ -25,8 +25,10 @@ use std::io::BufReader;
 fn draw_welcome_screen(framebuffer: &mut Framebuffer) {
     framebuffer.clear();
     framebuffer.set_current_color(Color(0xFFFFFF)); 
-    framebuffer.draw_text(100, 100, "Bienvenido a el laberinto de la muerte", Color(0xFFFFFF));
-    framebuffer.draw_text(100, 150, "Presiona tecla espacio para comenzar...", Color(0xFFFFFF));
+    framebuffer.draw_text(100, 100, "Bienvenido a el laberinto de la muerte. Selecciona un nivel:", Color(0xFFFFFF));
+    framebuffer.draw_text(100, 150, "1. Nivel 1", Color(0xFFFFFF));
+    framebuffer.draw_text(100, 200, "2. Nivel 2", Color(0xFFFFFF));
+    framebuffer.draw_text(100, 250, "Presiona 1 o 2 para seleccionar un nivel...", Color(0xFFFFFF));
 
 }
 
@@ -155,14 +157,18 @@ fn main() {
         WindowOptions::default(),
     ).unwrap();
 
-    let mut showing_welcome = true;
-    while showing_welcome && window.is_open() {
+    let mut showing_level_selection = true;
+    let mut selected_level = 1; // Nivel predeterminado
+    while showing_level_selection && window.is_open() {
         draw_welcome_screen(&mut framebuffer);
         window.update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height).unwrap();
 
-
-        if window.is_key_down(Key::Space) {
-            showing_welcome = false;
+        if window.is_key_down(Key::Key1) {
+            selected_level = 1;
+            showing_level_selection = false;
+        } else if window.is_key_down(Key::Key2) {
+            selected_level = 2;
+            showing_level_selection = false;
         }
 
         std::thread::sleep(frame_delay);
@@ -178,7 +184,14 @@ fn main() {
         speed: 2.0, 
     };
 
-    let maze = load_maze("./maze.txt");
+    let maze_file = match selected_level {
+        1 => "./maze1.txt",
+        2 => "./maze2.txt",
+        _ => "./maze1.txt",
+    };
+
+    let maze = load_maze(maze_file);
+
     let texture = Texture::from_file("bbbb.jpg").expect("Failed to load texture");
 
     let mut is_3d_mode = false;
