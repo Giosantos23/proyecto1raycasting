@@ -16,6 +16,16 @@ use crate::caster::{cast_ray, render_3d};
 use crate::texture::Texture;
 
 
+
+fn draw_welcome_screen(framebuffer: &mut Framebuffer) {
+    framebuffer.clear();
+    framebuffer.set_current_color(Color(0xFFFFFF)); 
+    framebuffer.draw_text(100, 100, "Bienvenido a el laberinto de la muerte", Color(0xFFFFFF));
+    framebuffer.draw_text(100, 150, "Presiona tecla espacio para comenzar...", Color(0xFFFFFF));
+
+}
+
+
 fn draw_cell(framebuffer: &mut Framebuffer, xo: usize, yo: usize, block_size: usize, cell: char) {
     if cell == ' ' {
         return;
@@ -60,16 +70,15 @@ fn draw_minimap(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<c
     let block_size_x = minimap_size as f32 / maze_width as f32;
     let block_size_y = minimap_size as f32 / maze_height as f32;
 
-    // Dibujar el laberinto en el minimapa
     for (row_index, row) in maze.iter().enumerate() {
         for (col_index, &cell) in row.iter().enumerate() {
             let x = (col_index as f32 * block_size_x) as usize;
             let y = (row_index as f32 * block_size_y) as usize;
 
             if cell != ' ' {
-                framebuffer.set_current_color(Color(0xFF0000)); // Color de los muros en el minimapa
+                framebuffer.set_current_color(Color(0xFF0000)); 
             } else {
-                framebuffer.set_current_color(Color(0x333333)); // Color del suelo en el minimapa
+                framebuffer.set_current_color(Color(0x333333)); 
             }
 
             for i in 0..block_size_x as usize {
@@ -82,12 +91,12 @@ fn draw_minimap(framebuffer: &mut Framebuffer, player: &Player, maze: &Vec<Vec<c
         }
     }
 
-    // Dibuja la posición del jugador
-    framebuffer.set_current_color(Color(0x0000FF)); // Color del jugador en el minimapa
+
+    framebuffer.set_current_color(Color(0x0000FF)); 
     let player_x = ((player.pos.x / (maze_width as f32 * 100.0)) * minimap_size as f32) as usize;
     let player_y = ((player.pos.y / (maze_height as f32 * 100.0)) * minimap_size as f32) as usize;
     
-    let player_size = 5; // Tamaño del punto del jugador en el minimapa
+    let player_size = 5; 
     let half_size = player_size / 2;
     
     for i in 0..player_size {
@@ -117,11 +126,25 @@ fn main() {
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
 
     let mut window = Window::new(
-        "Maze Runner",
+        "Death Maze",
         window_width,
         window_height,
         WindowOptions::default(),
     ).unwrap();
+
+    let mut showing_welcome = true;
+    while showing_welcome && window.is_open() {
+        draw_welcome_screen(&mut framebuffer);
+        window.update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height).unwrap();
+
+
+        if window.is_key_down(Key::Space) {
+            showing_welcome = false;
+        }
+
+        std::thread::sleep(frame_delay);
+    }
+
 
     framebuffer.set_background_color(Color(0x333355));
 
