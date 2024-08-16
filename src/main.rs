@@ -14,6 +14,8 @@ use crate::maze::load_maze;
 use crate::player::{Player};
 use crate::caster::{cast_ray, render_3d};
 use crate::texture::Texture;
+use rodio::{Decoder, OutputStream, Sink};
+use std::fs::File;
 
 
 
@@ -123,6 +125,13 @@ fn main() {
     let mut frames = 0;
     let mut fps = 0;
 
+//sonido de fantasma
+    let (_stream, stream_handle) = OutputStream::try_default().expect("Failed to get the default output stream");
+    let sound_file = File::open("fantasma.mp3").expect("Failed to open sound file");
+    let source = Decoder::new(std::io::BufReader::new(sound_file)).expect("Failed to decode sound file");
+    let sink = Sink::try_new(&stream_handle).expect("Failed to create Sink");
+    sink.append(source);
+
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
 
     let mut window = Window::new(
@@ -169,13 +178,18 @@ fn main() {
         if window.is_key_down(Key::W) {
             let next_pos = Vec2::new(player.pos.x + player.a.cos() * player.speed, player.pos.y + player.a.sin() * player.speed);
             if !is_colliding(&next_pos, &maze, 100) {
+                sink.play(); // Reproduce el sonido 
                 player.pos = next_pos;
+
             }
         }
         if window.is_key_down(Key::S) {
             let next_pos = Vec2::new(player.pos.x - player.a.cos() * player.speed, player.pos.y - player.a.sin() * player.speed);
             if !is_colliding(&next_pos, &maze, 100) {
+                sink.play(); // Reproduce el sonido
                 player.pos = next_pos;
+
+
             }
         }
         if window.is_key_down(Key::A) {
